@@ -19,6 +19,14 @@ export function Viewer({ code }: { code: string }) {
   const [status, setStatus] = useState<Status>('connecting')
   const [error, setError] = useState('')
   const [muted, setMuted] = useState(true)
+  const [volume, setVolume] = useState(() => {
+    try {
+      const saved = Number(localStorage.getItem('viewer-volume'))
+      return Number.isFinite(saved) && saved > 0 ? saved : 1
+    } catch {
+      return 1
+    }
+  })
   const [hasAudio, setHasAudio] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -147,13 +155,37 @@ export function Viewer({ code }: { code: string }) {
     }
   }, [code]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.volume = volume
+  }, [volume])
+
   function toggleMute() {
     const video = videoRef.current
     if (!video) return
     video.muted = !video.muted
+    if (!video.muted && video.volume === 0) changeVolume(0.5)
     setMuted(video.muted)
     void video.play().catch(() => {})
   }
+
+  function changeVolume(value: number) {
+    const video = videoRef.current
+    setVolume(value)
+    try {
+      localStorage.setItem('viewer-volume', String(value))
+    } catch {}
+    if (!video) return
+    video.volume = value
+    // Mexer no slider já ativa o som (o navegador exige um gesto do usuário).
+    const shouldMute = value === 0
+    if (video.muted !== shouldMute) {
+      video.muted = shouldMute
+      setMuted(shouldMute)
+      void video.play().catch(() => {})
+    }
+  }
+
+  const volumeIcon = muted || volume === 0 ? '🔇' : volume < 0.5 ? '🔉' : '🔊'
 
   function fullscreen() {
     const el = stageRef.current
@@ -188,8 +220,28 @@ export function Viewer({ code }: { code: string }) {
         <span className="muted">Sala <strong>{code}</strong></span>
         <div className="actions">
           {watching && hasAudio && (
-            <button className="btn secondary" onClick={toggleMute}>{muted ? '🔇 Ativar som' : '🔊 Silenciar'}</button>
+            <div className="volume">
+              <button
+                className="btn secondary icon"
+                onClick={toggleMute}
+                title={muted ? 'Ativar som' : 'Silenciar'}
+                aria-label={muted ? 'Ativar som' : 'Silenciar'}
+              >
+                {volumeIcon}
+              </button>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={muted ? 0 : volume}
+                onChange={(e) => changeVolume(Number(e.target.value))}
+                aria-label="Volume"
+              />
+              {muted && <span className="volume-hint">Clique para ouvir</span>}
+            </div>
           )}
+          {watching && !hasAudio && <span className="muted small">Sem áudio na transmissão</span>}
           {watching && <button className="btn secondary" onClick={fullscreen}>⛶ Tela cheia</button>}
         </div>
       </footer>

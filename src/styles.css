@@ -155,3 +155,18 @@ input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
   margin-bottom: 16px;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.small { font-size: 0.85rem; }
+
+.volume { display: flex; align-items: center; gap: 8px; }
+.btn.icon { padding: 8px 10px; line-height: 1; }
+.volume-hint { font-size: 0.8rem; color: var(--accent); }
+.volume input[type='range'] {
+  width: 110px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.volume input[type='range']:focus { outline: none; }
