@@ -5,9 +5,22 @@ import { navigate } from '../router'
 
 type Status = 'idle' | 'starting' | 'live' | 'error'
 
-const DISPLAY_OPTIONS: DisplayMediaStreamOptions = {
-  video: { frameRate: { ideal: 30, max: 60 } },
-  audio: true,
+// No Windows, áudio de janela/tela inteira = áudio do PC inteiro. Só aba isola o som.
+function displayOptions(allowSystemAudio: boolean) {
+  return {
+    video: { frameRate: { ideal: 30, max: 60 } },
+    audio: true,
+    systemAudio: allowSystemAudio ? 'include' : 'exclude',
+    // Chrome 141+: tenta capturar só o áudio da janela quando suportado.
+    windowAudio: allowSystemAudio ? 'system' : 'window',
+    selfBrowserSurface: 'exclude',
+  } as DisplayMediaStreamOptions
+}
+
+function describeAudio(stream: MediaStream | null) {
+  if (!stream?.getAudioTracks().length) return 'none'
+  const surface = (stream.getVideoTracks()[0]?.getSettings() as { displaySurface?: string }).displaySurface
+  return surface === 'browser' ? 'tab' : 'system'
 }
 
 export function Host() {
@@ -20,6 +33,9 @@ export function Host() {
   const [viewers, setViewers] = useState(0)
   const [connected, setConnected] = useState(0)
   const [copied, setCopied] = useState(false)
+  const [allowSystemAudio, setAllowSystemAudio] = useState(false)
+  const [audioSource, setAudioSource] = useState<'none' | 'tab' | 'system'>('none')
+  const [audioMuted, setAudioMuted] = useState(false)
 
   const previewRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -104,13 +120,23 @@ export function Host() {
     }
     streamRef.current = stream
     if (previewRef.current) previewRef.current.srcObject = stream
+    setAudioSource(describeAudio(stream))
+    stream.getAudioTracks().forEach((t) => (t.enabled = !audioMutedRef.current))
+  }
+
+  const audioMutedRef = useRef(false)
+  function toggleAudio() {
+    const next = !audioMutedRef.current
+    audioMutedRef.current = next
+    setAudioMuted(next)
+    streamRef.current?.getAudioTracks().forEach((t) => (t.enabled = !next))
   }
 
   async function start() {
     setError('')
     setStatus('starting')
     try {
-      const stream = await navigator.mediaDevices.getDisplayMedia(DISPLAY_OPTIONS)
+      const stream = await navigator.mediaDevices.getDisplayMedia(displayOptions(allowSystemAudio))
       watchStream(stream)
 
       const room = await joinRoom({
@@ -143,7 +169,7 @@ export function Host() {
     if (!old) return
     let next: MediaStream
     try {
-      next = await navigator.mediaDevices.getDisplayMedia(DISPLAY_OPTIONS)
+      next = await navigator.mediaDevices.getDisplayMedia(displayOptions(allowSystemAudio))
     } catch {
       return
     }
@@ -169,6 +195,7 @@ export function Host() {
     streamRef.current = null
     if (previewRef.current) previewRef.current.srcObject = null
     setViewers(0)
+    setAudioSource('none')
     setStatus('idle')
   }
 
@@ -221,19 +248,47 @@ export function Host() {
           </div>
 
           {!live ? (
-            <button className="btn big" disabled={status === 'starting'} onClick={start}>
-              {status === 'starting' ? 'Iniciando…' : 'Compartilhar minha tela'}
-            </button>
+            <>
+              <label className="check">
+                <input
+                  type="checkbox"
+                  checked={allowSystemAudio}
+                  onChange={(e) => setAllowSystemAudio(e.target.checked)}
+                />
+                <span>
+                  Incluir áudio do PC inteiro
+                  <small>Só marque se for compartilhar janela/tela e quiser mandar todo o som do computador.</small>
+                </span>
+              </label>
+              <button className="btn big" disabled={status === 'starting'} onClick={start}>
+                {status === 'starting' ? 'Iniciando…' : 'Compartilhar minha tela'}
+              </button>
+            </>
           ) : (
-            <div className="actions">
-              <button className="btn secondary" onClick={switchSource}>Trocar tela</button>
-              <button className="btn danger" onClick={stop}>Parar</button>
-            </div>
+            <>
+              <div className={`audio-status ${audioSource === 'system' && !audioMuted ? 'warn' : ''}`}>
+                <span>
+                  {audioSource === 'none' && '🔇 Sem áudio na transmissão'}
+                  {audioSource === 'tab' && (audioMuted ? '🔇 Áudio da aba mutado' : '🔊 Enviando áudio da aba')}
+                  {audioSource === 'system' &&
+                    (audioMuted ? '🔇 Áudio do PC mutado' : '⚠️ Enviando TODO o áudio do PC')}
+                </span>
+                {audioSource !== 'none' && (
+                  <button className="btn secondary icon" onClick={toggleAudio}>
+                    {audioMuted ? 'Ativar áudio' : 'Mutar áudio'}
+                  </button>
+                )}
+              </div>
+              <div className="actions">
+                <button className="btn secondary" onClick={switchSource}>Trocar tela</button>
+                <button className="btn danger" onClick={stop}>Parar</button>
+              </div>
+            </>
           )}
           {error && <p className="error">{error}</p>}
           <p className="hint">
-            Dica: para transmitir o áudio, escolha uma <strong>aba</strong> do Chrome/Edge e marque “Compartilhar
-            áudio”.
+            Para mandar só o som de um vídeo/filme, escolha uma <strong>aba</strong> e marque “Compartilhar áudio da
+            aba”. No Windows, janela ou tela inteira só conseguem enviar o áudio do PC todo.
           </p>
         </div>
 

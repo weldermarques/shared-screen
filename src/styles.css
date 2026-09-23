@@ -170,3 +170,20 @@ input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
   cursor: pointer;
 }
 .volume input[type='range']:focus { outline: none; }
+
+.check { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; cursor: pointer; }
+.check input { width: auto; margin-top: 4px; accent-color: var(--accent); }
+.check small { display: block; color: var(--muted); font-size: 0.8rem; }
+
+.audio-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  font-size: 0.9rem;
+}
+.audio-status.warn { background: rgba(239, 77, 90, 0.15); color: #ffb3b9; }
