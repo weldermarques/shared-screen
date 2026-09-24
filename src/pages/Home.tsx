@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { randomCode } from '../lib/rtc'
 import { navigate } from '../router'
 
 const DESKTOP_DOWNLOAD_URL =
@@ -17,19 +18,19 @@ export function Home() {
     <main className="page center">
       <div className="hero">
         <h1>🖥️ Shared Screen</h1>
-        <p className="muted">Compartilhe sua tela direto do navegador. Sem instalar nada, sem criar conta.</p>
+        <p className="muted">Salas com voz e compartilhamento de tela, direto do navegador. Sem instalar nada, sem criar conta.</p>
       </div>
 
       <div className="home-grid">
         <div className="card">
-          <h2>Apresentar</h2>
-          <p className="muted">Gere um link e transmita sua tela, janela ou aba.</p>
-          <button className="btn big" onClick={() => navigate('/host')}>Compartilhar minha tela</button>
+          <h2>Criar uma sala</h2>
+          <p className="muted">Gera um link para chamar as pessoas. Na sala, todos conversam por voz e qualquer um pode compartilhar a tela.</p>
+          <button className="btn big" onClick={() => navigate(`/r/${randomCode()}`)}>Criar sala</button>
         </div>
 
         <form className="card" onSubmit={watch}>
-          <h2>Assistir</h2>
-          <p className="muted">Digite o código recebido do apresentador.</p>
+          <h2>Entrar numa sala</h2>
+          <p className="muted">Digite o código da sala (ou abra o link que recebeu).</p>
           <input
             className="code-input"
             placeholder="EX: K7P2QX"

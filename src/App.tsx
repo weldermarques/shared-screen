@@ -1,8 +1,8 @@
 import { supabaseConfigured } from './lib/supabase'
 import { Home } from './pages/Home'
-import { Host } from './pages/Host'
-import { Viewer } from './pages/Viewer'
-import { usePathname } from './router'
+import { Room } from './pages/Room'
+import { randomCode } from './lib/rtc'
+import { navigate, usePathname } from './router'
 
 export function App() {
   const path = usePathname()
@@ -22,7 +22,11 @@ export function App() {
   }
 
   const room = path.match(/^\/r\/([A-Za-z0-9]+)\/?$/)
-  if (room) return <Viewer key={room[1]} code={room[1].toUpperCase()} />
-  if (path === '/host') return <Host />
+  if (room) return <Room key={room[1]} code={room[1].toUpperCase()} />
+  // Link antigo "/host": cria uma sala nova.
+  if (path === '/host') {
+    queueMicrotask(() => navigate(`/r/${randomCode()}`))
+    return null
+  }
   return <Home />
 }
