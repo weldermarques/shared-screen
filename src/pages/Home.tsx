@@ -1,6 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { navigate } from '../router'
 
+const DESKTOP_DOWNLOAD_URL =
+  'https://github.com/weldermarques/shared-screen-desktop/releases/latest/download/SharedScreen-Setup.exe'
+
 export function Home() {
   const [code, setCode] = useState('')
 
@@ -37,6 +40,14 @@ export function Home() {
           <button className="btn big secondary" type="submit" disabled={!code.trim()}>Entrar</button>
         </form>
       </div>
+
+      <a className="download" href={DESKTOP_DOWNLOAD_URL}>
+        <span className="download-icon" aria-hidden>⬇</span>
+        <span>
+          <strong>Baixar app para Windows</strong>
+          <small>Transmite o áudio do PC em qualquer modo · Windows 10/11</small>
+        </span>
+      </a>
 
       <p className="hint">A transmissão é ponto a ponto (WebRTC): o vídeo vai direto para quem assiste.</p>
     </main>

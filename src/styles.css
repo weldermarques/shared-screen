@@ -187,3 +187,34 @@ input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
   font-size: 0.9rem;
 }
 .audio-status.warn { background: rgba(239, 77, 90, 0.15); color: #ffb3b9; }
+
+.download {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 14px 20px;
+  width: 100%;
+  max-width: 760px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  text-decoration: none;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+.download:hover { border-color: var(--accent); background: var(--surface-2); }
+.download strong { display: block; }
+.download small { color: var(--muted); font-size: 0.85rem; }
+.download-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1.2rem;
+}
